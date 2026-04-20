@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CLOVER — Piano Tecnico per Nicolò</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #0c1710;
+  --bg-2:     #101e15;
+  --bg-3:     #142019;
+  --border:   #1e3328;
+  --border-2: #243d2e;
+  --green:    #34d399;
+  --green-dim:#1a6646;
+  --green-bg: #122019;
+  --text:     #deeee7;
+  --text-2:   #96b8a8;
+  --text-3:   #4a7a62;
+  --amber:    #fbbf24;
+  --amber-bg: #1e1a0e;
+  --blue:     #60a5fa;
+  --blue-bg:  #0f1a28;
+  --purple:   #a78bfa;
+  --font:     'Inter', system-ui, sans-serif;
+  --mono:     'JetBrains Mono', monospace;
+  --radius:   10px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.65; -webkit-font-smoothing: antialiased; }
+
+/* subtle grid bg */
+body::after {
+  content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background-image: linear-gradient(rgba(52,211,153,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+@keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+@keyframes bob      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+@keyframes blink    { 0%,100%{opacity:1} 50%{opacity:0} }
+.fade-up { opacity:0; transform:translateY(16px); transition: opacity 0.65s ease, transform 0.65s ease; }
+.fade-up.in { opacity:1; transform:none; }
+
+/* ── NAV ── */
+#nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  background: rgba(12,23,16,0.88); backdrop-filter:blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  max-width:1080px; margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 32px; height:56px;
+}
+.nav-logo {
+  font-family:var(--font); font-weight:800; font-size:16px;
+  color:var(--text); text-decoration:none; letter-spacing:-0.01em;
+  display:flex; align-items:center; gap:9px;
+}
+.nav-logo-badge {
+  width:26px; height:26px; border-radius:7px; background:var(--green-bg);
+  border:1px solid var(--green-dim); display:flex; align-items:center;
+  justify-content:center; font-size:13px;
+}
+.nav-links { display:flex; gap:2px; }
+.nav-links a {
+  padding:6px 13px; font-size:13px; font-weight:500; color:var(--text-2);
+  text-decoration:none; border-radius:7px; transition:all 0.15s;
+}
+.nav-links a:hover { color:var(--text); background:var(--bg-3); }
+.nav-links a.act { color:var(--green); background:var(--green-bg); }
+.nav-cta {
+  padding:8px 18px; background:var(--green); color:var(--bg); border-radius:8px;
+  font-size:13px; font-weight:700; text-decoration:none; transition:opacity 0.15s;
+}
+.nav-cta:hover { opacity:0.85; }
+@media(max-width:720px){ .nav-links{display:none} }
+
+/* ── SIDE RAIL ── */
+.side-rail {
+  position:fixed; left:20px; top:50%; transform:translateY(-50%);
+  display:flex; flex-direction:column; gap:8px; z-index:50;
+}
+@media(max-width:960px){.side-rail{display:none}}
+.rail-pip {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--border-2); border:1px solid var(--border);
+  transition:all 0.25s; cursor:pointer;
+}
+.rail-pip.on { background:var(--green); border-color:var(--green); transform:scale(1.4); }
+.rail-pip:hover { border-color:var(--text-3); }
+
+/* ── LAYOUT ── */
+.wrap { max-width:1080px; margin:0 auto; padding:0 32px; }
+section { padding:96px 0; }
+section.alt { background:var(--bg-2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+@media(max-width:720px){ section{padding:64px 0} .wrap{padding:0 20px} }
+
+.ch-label {
+  font-family:var(--mono); font-size:10px; font-weight:500;
+  letter-spacing:0.12em; text-transform:uppercase; color:var(--text-3);
+  margin-bottom:16px; display:flex; align-items:center; gap:10px;
+}
+.ch-label::before { content:''; width:20px; height:1px; background:var(--green-dim); }
+h2.ch-title {
+  font-size:clamp(28px,4vw,42px); font-weight:800; color:var(--text);
+  line-height:1.15; letter-spacing:-0.025em; margin-bottom:14px;
+}
+h2.ch-title .accent { color:var(--green); }
+.ch-lead {
+  font-size:16px; color:var(--text-2); max-width:520px;
+  line-height:1.75; margin-bottom:52px;
+}
+
+/* ── GRID ── */
+.g2  { display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+.g3  { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.ga  { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:20px; }
+@media(max-width:760px){ .g2,.g3{grid-template-columns:1fr} }
+
+/* ── CARD ── */
+.card {
+  background:var(--bg-2); border:1px solid var(--border);
+  border-radius:var(--radius); padding:24px;
+  transition:border-color 0.2s, transform 0.2s;
+}
+.card:hover { border-color:var(--border-2); transform:translateY(-2px); }
+.card-label {
+  font-family:var(--mono); font-size:10px; font-weight:500;
+  text-transform:uppercase; letter-spacing:0.1em; color:var(--text-3);
+  margin-bottom:12px; display:flex; align-items:center; gap:7px;
+}
+.card-label::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--green); flex-shrink:0; }
+.card-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:14px; }
+
+/* ── PILL ── */
+.pill {
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:11px; font-weight:500;
+  padding:4px 10px; border-radius:20px;
+  border:1px solid var(--border-2); color:var(--text-2);
+  background:var(--bg-3); letter-spacing:0.02em;
+}
+.pill.g { background:var(--green-bg); border-color:var(--green-dim); color:var(--green); }
+.pill.a { background:var(--amber-bg); border-color:#3a2e0a; color:var(--amber); }
+
+/* ── FLOW ── */
+.flow-node {
+  display:flex; align-items:center; gap:14px;
+  padding:12px 0; border-bottom:1px solid var(--border);
+}
+.flow-node:last-child { border:none; }
+.flow-icon {
+  width:40px; height:40px; border-radius:9px; flex-shrink:0;
+  background:var(--bg-3); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.flow-name { font-size:14px; font-weight:600; color:var(--text); }
+.flow-role { font-size:12.5px; color:var(--text-2); margin-top:1px; }
+.flow-arrow {
+  font-family:var(--mono); font-size:11px; color:var(--text-3); margin-left:auto; flex-shrink:0;
+}
+
+/* ── TERMINAL ── */
+.terminal {
+  background:#080f0b; border:1px solid var(--border);
+  border-radius:var(--radius); padding:24px;
+  font-family:var(--mono); font-size:12.5px; line-height:1.9;
+}
+.t-dim   { color:#2d5c3e; }
+.t-green { color:#34d399; }
+.t-blue  { color:#60a5fa; }
+.t-amber { color:#fbbf24; }
+.t-purple{ color:#a78bfa; }
+.t-muted { color:#4a7a62; }
+.t-bar   { font-size:10px; color:var(--border-2); margin-bottom:6px; display:flex; gap:6px; }
+.t-dot   { width:10px; height:10px; border-radius:50%; }
+
+/* ── TECH LIST ── */
+.tech-group { margin-bottom:28px; padding-left:0; }
+.tech-group-label {
+  font-family:var(--mono); font-size:10px; text-transform:uppercase;
+  letter-spacing:0.1em; color:var(--text-3); margin-bottom:10px;
+  padding-bottom:8px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
+}
+.tech-group-label span { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.tech-row { display:flex; align-items:baseline; gap:10px; padding:5px 0; border-bottom:1px solid rgba(30,51,40,0.4); font-size:13.5px; color:var(--text-2); }
+.tech-row:last-child { border:none; }
+.tech-row::before { content:'—'; color:var(--border-2); font-size:11px; flex-shrink:0; }
+
+/* ── TIMELINE ── */
+.tl { position:relative; padding-left:28px; }
+.tl::before {
+  content:''; position:absolute; left:5px; top:8px; bottom:8px; width:1px;
+  background: repeating-linear-gradient(to bottom,var(--border-2) 0,var(--border-2) 4px,transparent 4px,transparent 8px);
+}
+.tl-item { position:relative; margin-bottom:36px; }
+.tl-item:last-child { margin-bottom:0; }
+.tl-dot {
+  position:absolute; left:-24px; top:5px;
+  width:12px; height:12px; border-radius:50%;
+  border:2px solid var(--bg); background:var(--border-2);
+  box-shadow:0 0 0 1px var(--border-2);
+}
+.tl-dot.p1 { background:var(--green); box-shadow:0 0 0 2px var(--green-dim); }
+.tl-dot.p2 { background:var(--amber); box-shadow:0 0 0 2px #3a2e0a; }
+.tl-dot.p3 { background:var(--blue);  box-shadow:0 0 0 2px #1a2e48; }
+.tl-dot.p4 { background:var(--purple);box-shadow:0 0 0 2px #2a1e48; }
+.tl-weeks { font-family:var(--mono); font-size:10px; color:var(--text-3); margin-bottom:5px; letter-spacing:0.06em; }
+.tl-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px; }
+.tl-li { font-size:13px; color:var(--text-2); padding:2px 0; display:flex; gap:8px; }
+.tl-li::before { content:'·'; color:var(--text-3); flex-shrink:0; }
+
+/* ── GANTT ── */
+.gantt-track { height:26px; background:var(--bg-3); border-radius:5px; position:relative; }
+.gantt-bar {
+  position:absolute; height:100%; border-radius:5px;
+  font-family:var(--mono); font-size:10px; font-weight:500;
+  display:flex; align-items:center; padding:0 9px; overflow:hidden;
+  white-space:nowrap; color:rgba(255,255,255,0.75);
+}
+
+/* ── ROLE CARD ── */
+.role-initial {
+  width:44px; height:44px; border-radius:10px; flex-shrink:0;
+  font-size:18px; font-weight:800; display:flex; align-items:center;
+  justify-content:center; letter-spacing:-0.02em;
+}
+.rs-label { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-3); margin:14px 0 7px; }
+.rs-item { font-size:13px; color:var(--text-2); padding:3px 0; display:flex; gap:8px; }
+.rs-item::before { content:'→'; color:var(--text-3); flex-shrink:0; font-size:12px; }
+
+/* ── MVP COLS ── */
+.mvp-col { border-radius:var(--radius); padding:22px; border:1px solid var(--border); background:var(--bg-2); }
+.mvp-tag { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-3); margin-bottom:5px; }
+.mvp-h  { font-size:15px; font-weight:700; color:var(--text); margin-bottom:14px; }
+.mvp-li { font-size:13px; color:var(--text-2); padding:5px 0; border-bottom:1px solid var(--border); display:flex; gap:9px; align-items:baseline; }
+.mvp-li:last-child { border:none; }
+.mvp-tick { font-size:11px; flex-shrink:0; }
+
+/* ── CTA ── */
+#cta { background:var(--bg); border-top:1px solid var(--border); }
+.cta-wrap { max-width:1080px; margin:0 auto; padding:96px 32px; }
+.cta-title { font-size:clamp(36px,5vw,60px); font-weight:800; color:var(--text); line-height:1.1; letter-spacing:-0.03em; margin-bottom:12px; }
+.cta-title .accent { color:var(--green); }
+.cta-sub { font-size:16px; color:var(--text-2); margin-bottom:52px; max-width:480px; line-height:1.7; }
+.proposal-grid {
+  background:var(--bg-2); border:1px solid var(--border);
+  border-radius:var(--radius); overflow:hidden; margin-bottom:36px;
+}
+.prop-row { display:flex; gap:0; border-bottom:1px solid var(--border); }
+.prop-row:last-child { border:none; }
+.prop-k { width:160px; flex-shrink:0; padding:16px 20px; font-size:13px; font-weight:600; color:var(--text-2); border-right:1px solid var(--border); background:var(--bg-3); }
+.prop-v { padding:16px 20px; font-size:13px; color:var(--text); flex:1; }
+.cta-btns { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+.btn-g { display:inline-flex; align-items:center; gap:8px; padding:13px 24px; background:var(--green); color:var(--bg); border-radius:8px; font-size:14px; font-weight:700; text-decoration:none; transition:opacity 0.15s; }
+.btn-g:hover { opacity:0.85; }
+.btn-d { display:inline-flex; align-items:center; gap:8px; padding:13px 24px; background:var(--bg-3); color:var(--text-2); border:1px solid var(--border-2); border-radius:8px; font-size:14px; font-weight:500; text-decoration:none; transition:all 0.15s; }
+.btn-d:hover { color:var(--text); border-color:var(--text-3); }
+.cta-note { font-size:13px; color:var(--text-3); }
+.cta-note a { color:var(--text-2); text-decoration:none; border-bottom:1px solid var(--border-2); }
+
+/* ── FOOTER ── */
+footer { background:var(--bg); border-top:1px solid var(--border); padding:24px 32px; text-align:center; }
+footer p { font-family:var(--mono); font-size:11px; color:var(--text-3); }
+footer a { color:var(--text-2); text-decoration:none; }
+
+/* ── DIVIDER ── */
+hr { border:none; border-top:1px solid var(--border); }
+
+/* ── TWEAKS ── */
+#tweaks-panel {
+  position:fixed; bottom:24px; right:24px; z-index:200;
+  background:var(--bg-2); border:1px solid var(--border-2); border-radius:10px;
+  padding:20px; width:220px; box-shadow:0 12px 40px rgba(0,0,0,0.4);
+  display:none;
+}
+#tweaks-panel.open { display:block; animation:fadeUp 0.2s ease; }
+.tw-title { font-size:12px; font-weight:700; color:var(--text); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
+.tw-row { margin-bottom:11px; }
+.tw-label { font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-3); margin-bottom:5px; }
+.tw-row select { width:100%; padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:var(--font); background:var(--bg-3); color:var(--text); }
+.tw-row input[type="color"] { width:100%; height:32px; padding:2px 4px; border:1px solid var(--border); border-radius:6px; background:var(--bg-3); cursor:pointer; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none} }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="#hero">
+      <div class="nav-logo-badge">🍀</div>
+      CLOVER
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="#visione">Visione</a>
+      <a href="#stack">Stack</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#ruoli">Ruoli</a>
+      <a href="#scope">Scope</a>
+      <a href="#cta" class="nav-cta">Iniziamo →</a>
+    </div>
+  </div>
+</nav>
+
+<div class="side-rail" id="rail">
+  <div class="rail-pip" data-s="hero"></div>
+  <div class="rail-pip" data-s="visione"></div>
+  <div class="rail-pip" data-s="stack"></div>
+  <div class="rail-pip" data-s="roadmap"></div>
+  <div class="rail-pip" data-s="ruoli"></div>
+  <div class="rail-pip" data-s="scope"></div>
+  <div class="rail-pip" data-s="cta"></div>
+</div>
+
+<!-- HERO -->
+<section id="hero" style="padding:0; min-height:100vh; display:flex; align-items:center; padding-top:56px;">
+  <div class="wrap" style="padding-top:80px; padding-bottom:80px;">
+    <div class="fade-up" style="font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:28px;">
+      Per Nicolò · Aprile 2026
+    </div>
+    <h1 class="fade-up" style="font-size:clamp(48px,8vw,88px);font-weight:800;color:var(--text);line-height:1.0;letter-spacing:-0.03em;margin-bottom:20px;transition-delay:0.04s">
+      CLOVER<br/><span style="color:var(--green)">Piano Tecnico.</span>
+    </h1>
+    <p class="fade-up" style="font-size:17px;color:var(--text-2);max-width:500px;line-height:1.75;margin-bottom:36px;transition-delay:0.08s">
+      Un website builder per le piccole imprese che hanno cose più importanti da fare che imparare Wix, né di spendere troppo. Ecco come voglio costruirlo — e perché vorrei farlo con te.
+    </p>
+    <div class="fade-up" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:36px;transition-delay:0.12s">
+      <span class="pill g">React + Vite</span>
+      <span class="pill g">Claude API</span>
+      <span class="pill">Stripe</span>
+      <span class="pill">Supabase</span>
+      <span class="pill">Vercel</span>
+      <span class="pill">TypeScript</span>
+    </div>
+    <div class="fade-up" style="display:flex;flex-wrap:wrap;gap:12px;transition-delay:0.16s">
+      <a href="https://sciemok.github.io/ai-project/" target="_blank" rel="noopener noreferrer" class="btn-g">Iniziamo →</a>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:36px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:10px;color:var(--text-3);display:flex;flex-direction:column;align-items:center;gap:7px;animation:bob 2.5s ease infinite">
+    scroll
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  </div>
+</section>
+
+<div id="app-root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+function useFade(threshold = 0.12) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { el.classList.add('in'); obs.disconnect(); }
+    }, { threshold });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+function F({ children, delay = 0, style, className = '' }) {
+  const ref = useFade();
+  return <div ref={ref} className={`fade-up ${className}`} style={{ transitionDelay:`${delay}s`, ...style }}>{children}</div>;
+}
+
+// ── VISIONE ─────────────────────────────────────────────────────
+function Visione() {
+  const flow = [
+    { e:'👤', n:'Tu (il titolare)', r:'Rispondi a qualche domanda — 3 minuti', c:'var(--bg-3)', b:'var(--border-2)' },
+    { e:'🧑‍💼', n:'Jack — Project Manager', r:'Struttura cosa deve comunicare il sito', c:'#1a1500', b:'#3a2e0a' },
+    { e:'✍️', n:'Franco — Copywriter', r:'Scrive headline, testi, call to action', c:'var(--blue-bg)', b:'#1a2e48' },
+    { e:'🎨', n:'Luna — Designer', r:'Sceglie layout e stile visivo', c:'#1a1028', b:'#2a1e48' },
+    { e:'⚡', n:'Leo — Developer', r:'Genera e pubblica il sito statico', c:'var(--green-bg)', b:'var(--green-dim)' },
+    { e:'✅', n:'Sito live + QR Code', r:'tuonome.clover.app — pronto da condividere', c:'var(--green-bg)', b:'var(--green-dim)' },
+  ];
+
+  return (
+    <section id="visione">
+      <div className="wrap">
+        <F><div className="ch-label">01 · Visione</div></F>
+        <F delay={0.04}><h2 className="ch-title">Il problema è <span className="accent">ovvio</span>,<br/>una volta che lo vedi.</h2></F>
+        <F delay={0.08}><p className="ch-lead">Ogni ristorante, hotel o barbiere ha bisogno di un sito. Le agenzie costano €500+. I builder come Wix sono complicati, brutti e pieni di costi nascosti. Mia mamma paga ogni mese per una pagina che fa schifo. Non è sola.</p></F>
+
+        <div className="g2">
+          <F delay={0.04}>
+            <div>
+              {[
+                { icon:'😤', h:'Il problema', c:'#1e0e0e', bc:'#3a1515', tc:'#e07070',
+                  b:'Le piccole imprese hanno bisogno di una presenza online. Ma sono bloccate tra agenzie costose e strumenti overcomplessi pensati per marketer, non per titolari.' },
+                { icon:'🍀', h:'La soluzione Clover', c:'var(--green-bg)', bc:'var(--green-dim)', tc:'var(--green)',
+                  b:'Una breve conversazione con 4 personaggi AI → sito statico live in ~5 minuti. €0 per iniziare. Paghi solo quando vuoi andare live con il tuo dominio.' },
+              ].map(r => (
+                <div key={r.h} style={{display:'flex',gap:14,marginBottom:18}}>
+                  <div style={{width:38,height:38,borderRadius:9,background:r.c,border:`1px solid ${r.bc}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{r.icon}</div>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:14,color:r.tc,marginBottom:4}}>{r.h}</div>
+                    <div style={{fontSize:13.5,color:'var(--text-2)',lineHeight:1.65}}>{r.b}</div>
+                  </div>
+                </div>
+              ))}
+              <div style={{background:'var(--bg-3)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'16px 18px',marginTop:8}}>
+                <div style={{fontFamily:'var(--mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.1em',color:'var(--text-3)',marginBottom:8}}>Chi sono i clienti target</div>
+                {['🍽️  Ristoranti — menu digitale, orari, delivery','🏨  Hotel & B&B — landing page, prenotazioni dirette','✂️  Barbieri — portfolio, link prenotazione','🔧  Servizi locali — pagina contatti, servizi'].map(t => (
+                  <div key={t} style={{fontSize:13.5,color:'var(--text-2)',padding:'4px 0',borderBottom:'1px solid var(--border)'}}>{t}</div>
+                ))}
+              </div>
+            </div>
+          </F>
+
+          <F delay={0.08}>
+            <div className="card" style={{padding:0,overflow:'hidden'}}>
+              <div style={{padding:'18px 22px',borderBottom:'1px solid var(--border)',background:'var(--bg-3)'}}>
+                <div style={{fontFamily:'var(--mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.1em',color:'var(--text-3)'}}>Come funziona il build da 5 minuti</div>
+              </div>
+              <div style={{padding:'8px 22px 16px'}}>
+                {flow.map((s, i) => (
+                  <div key={s.n} className="flow-node">
+                    <div className="flow-icon" style={{background:s.c,borderColor:s.b}}>{s.e}</div>
+                    <div>
+                      <div className="flow-name">{s.n}</div>
+                      <div className="flow-role">{s.r}</div>
+                    </div>
+                    {i < flow.length-1 && <div className="flow-arrow">↓</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </F>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── STACK ─────────────────────────────────────────────────────
+const techGroups = [
+  { label:'Frontend', color:'var(--blue)', items:['React 18 + Vite + TypeScript','Tailwind CSS + @headlessui per i componenti','Framer Motion (animazioni personaggi)','Zustand (state management leggero)'] },
+  { label:'AI Layer', color:'var(--green)', items:['Claude API — copy + scaffolding codice','Prompt modulari per ciascun agente','Fallback: OpenAI API (confronto costi/latenza)'] },
+  { label:'Backend & Dati', color:'var(--amber)', items:['Supabase: Auth (email + Google)','PostgreSQL — utenti + progetti','Supabase Storage — asset caricati'] },
+  { label:'Pagamenti', color:'#34d399', items:['Stripe Checkout + Customer Portal','Free: 1 sito, sottodominio Clover','Pro €19/mese: dominio custom + analytics'] },
+  { label:'Deploy', color:'var(--purple)', items:['Vercel API / Netlify Functions','Sito statico generato da template + dati utente','Fase 2: deploy sull\'account Vercel dell\'utente'] },
+  { label:'Integrazioni (Fase 2)', color:'var(--text-3)', items:['QR Code: qrcode.react','WhatsApp / Twilio per modifiche via chat','Cloudflare/Namecheap API per domini','Analytics: Plausible o custom'] },
+];
+
+const archLayers = [
+  { l:'Browser utente',  c:'var(--blue)',   cm:'React SPA + Framer Motion' },
+  { l:'React App',       c:'var(--purple)', cm:'Vite + TypeScript + Zustand' },
+  { l:'Claude API',      c:'var(--green)',  cm:'4 prompt agente → copy + codice' },
+  { l:'Supabase',        c:'var(--amber)',  cm:'Auth + PostgreSQL + Storage' },
+  { l:'Vercel API',      c:'#f87171',       cm:'Generazione sito statico' },
+  { l:'Preview + QR',    c:'var(--green)',  cm:'tuonome.clover.app' },
+];
+
+function Stack() {
+  return (
+    <section id="stack" className="alt">
+      <div className="wrap">
+        <F><div className="ch-label">02 · Stack Tecnico</div></F>
+        <F delay={0.04}><h2 className="ch-title">Una base solida.<br/><span className="accent">Da discutere insieme.</span></h2></F>
+        <F delay={0.08}><p className="ch-lead">Ogni scelta ha una ragione. Veloce da spedire, facile da iterare. Aperto a discutere qualsiasi decisione architetturale.</p></F>
+
+        <div className="g2">
+          <F delay={0.04}>
+            <div>
+              {techGroups.map(g => (
+                <div className="tech-group" key={g.label}>
+                  <div className="tech-group-label">
+                    <span style={{background:g.color}}></span>
+                    {g.label}
+                  </div>
+                  {g.items.map(item => <div key={item} className="tech-row">{item}</div>)}
+                </div>
+              ))}
+            </div>
+          </F>
+          <F delay={0.08}>
+            <div style={{position:'sticky',top:76}}>
+              <div className="terminal">
+                <div className="t-bar">
+                  <div className="t-dot" style={{background:'#f87171'}}></div>
+                  <div className="t-dot" style={{background:'var(--amber)'}}></div>
+                  <div className="t-dot" style={{background:'var(--green)'}}></div>
+                  <span style={{marginLeft:8,color:'var(--text-3)',fontSize:11,fontFamily:'var(--mono)'}}>architettura.txt</span>
+                </div>
+                <div style={{marginBottom:4,color:'var(--text-3)'}}>// flusso dati — dall'utente al sito live</div>
+                <div style={{height:8}}></div>
+                {archLayers.map((l, i) => (
+                  <div key={l.l}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span className="t-dim">[</span>
+                      <span style={{color:l.c,fontWeight:500}}>{l.l}</span>
+                      <span className="t-dim">]</span>
+                      <span style={{flex:1}}></span>
+                      <span className="t-muted" style={{fontSize:11}}>// {l.cm}</span>
+                    </div>
+                    {i < archLayers.length-1 && <div style={{paddingLeft:12,color:'var(--text-3)',fontSize:11}}>↓</div>}
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </F>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── ROADMAP ─────────────────────────────────────────────────────
+const phases = [
+  { dot:'p1', weeks:'Settimane 1–2', title:'Prototipo & Validazione',
+    items:['Finalizzare il flusso onboarding in 7 step con animazioni personaggi','Mock delle risposte AI (hardcoded) — abbastanza per una demo reale','Costruire questa pagina + condividerla con te','Andrea: UI/UX, copy, asset marketing','Nicolò: revisione architettura, suggerimenti'] },
+  { dot:'p2', weeks:'Settimane 3–5', title:'MVP Funzionale',
+    items:['Integrazione Claude API per copy reale + generazione codice','Supabase auth + salvataggio progetti','Generazione sito statico + preview URL via Vercel','Stripe in modalità test + pagina prezzi','Generazione automatica QR code al momento della pubblicazione'] },
+  { dot:'p3', weeks:'Settimane 6–8', title:'Pronto al Lancio',
+    items:['Stripe live + gestione abbonamenti','Dashboard utente: modifica testo, ri-esegui AI, analytics','Flusso modifiche via WhatsApp (webhook → Claude → aggiornamento)','Andrea: outreach locale (Livigno + confine svizzero)','Nicolò: rifinitura, testing, error handling, docs'] },
+  { dot:'p4', weeks:'Mese 3+', title:'Scala',
+    items:['Connessione dominio custom','Marketplace template (design della community)','Analytics avanzate + A/B testing','Account team (più utenti per azienda)'] },
+];
+
+const ganttRows = [
+  { who:'Andrea', color:'var(--green)',  bars:[{l:'0%',w:'25%',t:'UI/UX · copy'},{l:'25%',w:'38%',t:'Video content'},{l:'63%',w:'37%',t:'Sales · outreach'}] },
+  { who:'Nicolò', color:'var(--blue)',   bars:[{l:'2%',w:'8%',t:'Review'},{l:'25%',w:'38%',t:'Core dev'},{l:'63%',w:'37%',t:'Rifinire · scala'}] },
+];
+
+function Roadmap() {
+  return (
+    <section id="roadmap">
+      <div className="wrap">
+        <F><div className="ch-label">03 · Roadmap</div></F>
+        <F delay={0.04}><h2 className="ch-title">Otto settimane<br/>ai primi <span className="accent">clienti paganti.</span></h2></F>
+        <F delay={0.08}><p className="ch-lead">Scope stretto, milestone chiare. L'obiettivo non è il prodotto perfetto — è dieci imprese reali che usano Clover entro il secondo mese.</p></F>
+
+        <div className="g2">
+          <F delay={0.04}>
+            <div className="tl">
+              {phases.map(p => (
+                <div key={p.title} className="tl-item">
+                  <div className={`tl-dot ${p.dot}`}></div>
+                  <div className="tl-weeks">{p.weeks}</div>
+                  <div className="tl-title">{p.title}</div>
+                  <ul style={{listStyle:'none'}}>
+                    {p.items.map(item => <li key={item} className="tl-li">{item}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </F>
+          <F delay={0.08}>
+            <div className="card" style={{padding:0,overflow:'hidden',position:'sticky',top:76}}>
+              <div style={{padding:'16px 20px',borderBottom:'1px solid var(--border)',background:'var(--bg-3)'}}>
+                <div style={{fontFamily:'var(--mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.1em',color:'var(--text-3)'}}>Overlap task — Andrea vs. Nicolò</div>
+              </div>
+              <div style={{padding:'20px',overflowX:'auto'}}>
+                <div style={{display:'flex',marginBottom:8,paddingLeft:68}}>
+                  {['S1','S2','S3','S4','S5','S6','S7','S8','M3+'].map(w => (
+                    <div key={w} style={{flex:1,textAlign:'center',fontSize:9,color:'var(--text-3)',fontFamily:'var(--mono)',minWidth:34}}>{w}</div>
+                  ))}
+                </div>
+                {ganttRows.map(row => (
+                  <div key={row.who} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+                    <div style={{width:60,flexShrink:0,fontSize:11,fontWeight:600,color:'var(--text-3)',fontFamily:'var(--mono)'}}>{row.who}</div>
+                    <div style={{flex:1,height:26,background:'var(--bg-3)',borderRadius:5,position:'relative',minWidth:240}}>
+                      {row.bars.map((b,i) => (
+                        <div key={i} className="gantt-bar" style={{left:b.l,width:b.w,background:row.color,opacity:0.65+i*0.1}}>{b.t}</div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div style={{display:'flex',gap:16,marginTop:10}}>
+                  {ganttRows.map(r => (
+                    <div key={r.who} style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'var(--text-3)'}}>
+                      <div style={{width:10,height:10,borderRadius:3,background:r.color,opacity:0.75}}></div>
+                      {r.who}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </F>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── RUOLI ─────────────────────────────────────────────────────
+function Ruoli() {
+  const ruoli = [
+    {
+      i:'A', n:'Andrea', tag:'Founder · Prodotto & Marketing',
+      bg:'var(--green-bg)', ic:'var(--green)',
+      sections:[
+        { l:'Design & Prodotto', items:['Definire il flusso onboarding, i personaggi, il copy','Tradurre il feedback utenti in priorità chiare','Bridging tra design e ciò che si può spedire'] },
+        { l:'Marketing & Vendite', items:['"Video a due" — costruiamo siti live su camera','TikTok/Reels: demo build da 5 minuti','Outreach locale diretto (Livigno + confine)'] },
+        { l:'Coordinamento', items:['Sync settimanale + task management Notion/Linear','Gestione dei primi 10 clienti pilota','Definire cosa significa MVP settimana per settimana'] },
+      ]
+    },
+    {
+      i:'N', n:'Nicolò', tag:'Co-Founder Tecnico · Engineering',
+      bg:'var(--blue-bg)', ic:'var(--blue)',
+      sections:[
+        { l:'Architettura', items:['Ownership sulle decisioni di stack — push back su tutto','Sicurezza, scalabilità e default sensati dal giorno uno','TypeScript strict mode + strategia di testing'] },
+        { l:'Sviluppo Core', items:['Logica orchestrazione agenti AI','Pipeline generazione sito statico','Schema Supabase + route API + webhook Stripe'] },
+        { l:'Mentorship', items:['Guidarmi sui pattern backend mentre costruiamo','Code review + documentazione tecnica','Decisioni tech finali: le prendi tu'] },
+      ]
+    }
+  ];
+
+  return (
+    <section id="ruoli" className="alt">
+      <div className="wrap">
+        <F><div className="ch-label">04 · Ruoli</div></F>
+        <F delay={0.04}><h2 className="ch-title">Due persone.<br/><span className="accent">Confini netti.</span></h2></F>
+        <F delay={0.08}><p className="ch-lead">Niente sovrapposizioni. Andrea possiede prodotto e marketing. Nicolò possiede l'architettura e il codice. Entrambi hanno voce in capitolo sulla direzione.</p></F>
+
+        <div className="g2" style={{marginBottom:24}}>
+          {ruoli.map(r => (
+            <F key={r.n} delay={0.04}>
+              <div className="card" style={{padding:26}}>
+                <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:22}}>
+                  <div className="role-initial" style={{background:r.bg,color:r.ic}}>{r.i}</div>
+                  <div>
+                    <div style={{fontWeight:800,fontSize:16,color:'var(--text)'}}>{r.n}</div>
+                    <div style={{fontSize:12,color:'var(--text-2)',marginTop:1}}>{r.tag}</div>
+                  </div>
+                </div>
+                {r.sections.map(s => (
+                  <div key={s.l} style={{marginBottom:14}}>
+                    <div className="rs-label">{s.l}</div>
+                    {s.items.map(item => <div key={item} className="rs-item">{item}</div>)}
+                  </div>
+                ))}
+              </div>
+            </F>
+          ))}
+        </div>
+
+        <F delay={0.08}>
+          <div className="card" style={{padding:0,overflow:'hidden'}}>
+            <div style={{padding:'14px 20px',borderBottom:'1px solid var(--border)',background:'var(--bg-3)'}}>
+              <div style={{fontFamily:'var(--mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.1em',color:'var(--text-3)'}}>Come lavoriamo insieme</div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))'}}>
+              {[
+                {k:'Compenso','v':'Equity % + stipendio settimanale (da concordare)'},
+                {k:'Cadenza','v':'Sync video settimanale da 30 min + async Notion/Linear'},
+                {k:'Codebase','v':'GitHub org, branch strategy chiara, PR review'},
+                {k:'Decisioni','v':'Prodotto/marketing = Andrea · Tech/architettura = Nicolò'},
+              ].map(({k,v},i) => (
+                <div key={k} style={{padding:'16px 20px',borderRight:i<3?'1px solid var(--border)':'none',borderBottom:'none'}}>
+                  <div style={{fontFamily:'var(--mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.1em',color:'var(--text-3)',marginBottom:5}}>{k}</div>
+                  <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.6}}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </F>
+      </div>
+    </section>
+  );
+}
+
+// ── SCOPE ─────────────────────────────────────────────────────
+function Scope() {
+  const cols = [
+    {
+      tag:'Settimane 1–6', h:'MVP', bg:'var(--green-bg)', bc:'var(--green-dim)', tc:'var(--green)',
+      tick:'✓', items:['Onboarding conversazionale con 4 personaggi','Copy AI + selezione layout','Sito statico su sottodominio Clover','QR code generato automaticamente','Stripe pagamenti (test → live)','Dashboard: modifica, ri-esegui AI, analytics']
+    },
+    {
+      tag:'Mese 2–3', h:'Fase 2', bg:'var(--amber-bg)', bc:'#3a2e0a', tc:'var(--amber)',
+      tick:'→', items:['Modifiche via WhatsApp','Connessione dominio custom','Toggle Google Analytics / Meta Pixel','Marketplace template','Multilingua (IT/EN/DE)']
+    },
+    {
+      tag:'Mese 4+', h:'Visione futura', bg:'#1a1028', bc:'#2a1e48', tc:'var(--purple)',
+      tick:'◦', items:['CMS completo con drag-and-drop','E-commerce lite (ordini via WhatsApp)','Account team (più collaboratori)','AI analytics: "l\'80% degli scan va al menu"']
+    },
+  ];
+
+  return (
+    <section id="scope">
+      <div className="wrap">
+        <F><div className="ch-label">05 · Scope MVP</div></F>
+        <F delay={0.04}><h2 className="ch-title">Cosa esce adesso.<br/><span className="accent">Cosa viene dopo.</span></h2></F>
+        <F delay={0.08}><p className="ch-lead">L'MVP è intenzionalmente stretto. Una cosa fatta bene vale più di cinque fatte a metà.</p></F>
+
+        <div className="g3">
+          {cols.map(c => (
+            <F key={c.h} delay={0.04}>
+              <div className="mvp-col" style={{background:c.bg,borderColor:c.bc}}>
+                <div className="mvp-tag">{c.tag}</div>
+                <div className="mvp-h" style={{color:c.tc}}>{c.h}</div>
+                {c.items.map(item => (
+                  <div key={item} className="mvp-li">
+                    <span className="mvp-tick" style={{color:c.tc}}>{c.tick}</span>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </F>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── CTA ─────────────────────────────────────────────────────
+function CTA() {
+  return (
+    <section id="cta">
+      <div className="cta-wrap">
+        <F><div style={{fontFamily:'var(--mono)',fontSize:10,textTransform:'uppercase',letterSpacing:'0.12em',color:'var(--text-3)',marginBottom:16}}>06 · Iniziamo</div></F>
+        <F delay={0.04}><h2 className="cta-title">Costruiamolo<br/><span className="accent">insieme.</span></h2></F>
+        <F delay={0.08}><p className="cta-sub">Se l'idea ti convince, ecco come strutturerei la collaborazione.</p></F>
+
+        <F delay={0.1}>
+          <div className="proposal-grid">
+            {[
+              {k:'Formato',    v:'Sprint di 2 settimane per iniziare — Fase 1 insieme'},
+              {k:'Compenso',   v:'Stipendio settimanale + equity % (da concordare sulla call)'},
+              {k:'Obiettivo',  v:'10 imprese pilota attive entro il secondo mese'},
+              {k:'Modalità',   v:'Async-first, bassa frizione, sync settimanale da 30 min'},
+              {k:'Strumenti',  v:'GitHub org · Notion/Linear · video call settimanale'},
+            ].map(({k,v}) => (
+              <div key={k} className="prop-row">
+                <div className="prop-k">{k}</div>
+                <div className="prop-v">{v}</div>
+              </div>
+            ))}
+          </div>
+        </F>
+
+
+      </div>
+    </section>
+  );
+}
+
+// ── TWEAKS ─────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "#34d399",
+  "density": "comfortable"
+}/*EDITMODE-END*/;
+
+function TweaksPanel() {
+  const [open, setOpen] = useState(false);
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+
+  useEffect(() => {
+    window.addEventListener('message', e => {
+      if (e.data?.type === '__activate_edit_mode') setOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setOpen(false);
+    });
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+  }, []);
+
+  function apply(key, val) {
+    const next = { ...tweaks, [key]: val };
+    setTweaks(next);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: next }, '*');
+    if (key === 'accentColor') {
+      document.documentElement.style.setProperty('--green', val);
+    }
+    if (key === 'density') {
+      const px = val === 'compact' ? '72px' : val === 'spacious' ? '120px' : '96px';
+      document.querySelectorAll('section').forEach(el => { el.style.paddingTop = px; el.style.paddingBottom = px; });
+    }
+  }
+
+  return (
+    <div id="tweaks-panel" className={open ? 'open' : ''}>
+      <div className="tw-title">
+        Tweaks
+        <button onClick={() => setOpen(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:18,lineHeight:1}}>×</button>
+      </div>
+      <div className="tw-row">
+        <div className="tw-label">Colore accento</div>
+        <input type="color" value={tweaks.accentColor} onChange={e => apply('accentColor', e.target.value)}/>
+      </div>
+      <div className="tw-row">
+        <div className="tw-label">Densità sezioni</div>
+        <select value={tweaks.density} onChange={e => apply('density', e.target.value)}>
+          <option value="compact">Compatta</option>
+          <option value="comfortable">Standard</option>
+          <option value="spacious">Ampia</option>
+        </select>
+      </div>
+    </div>
+  );
+}
+
+// ── APP ─────────────────────────────────────────────────────
+function App() {
+  useEffect(() => {
+    const nav = document.getElementById('nav');
+    const navLinks = document.querySelectorAll('#nav-links a[href^="#"]');
+    const sectionIds = ['hero','visione','stack','roadmap','ruoli','scope','cta'];
+    const secs = sectionIds.map(id => document.getElementById(id)).filter(Boolean);
+    const pips = document.querySelectorAll('.rail-pip');
+
+    function onScroll() {
+      const sy = window.scrollY;
+      let cur = 'hero';
+      secs.forEach(s => { if (sy >= s.offsetTop - 80) cur = s.id; });
+      navLinks.forEach(l => l.classList.toggle('act', l.getAttribute('href') === '#' + cur));
+      pips.forEach(p => p.classList.toggle('on', p.dataset.s === cur));
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    pips.forEach(p => p.addEventListener('click', () => {
+      const t = document.getElementById(p.dataset.s);
+      if (t) window.scrollTo({ top: t.offsetTop - 56, behavior: 'smooth' });
+    }));
+
+    // hero immediate fade
+    document.querySelectorAll('#hero .fade-up').forEach((el, i) => {
+      setTimeout(() => el.classList.add('in'), 80 + i * 60);
+    });
+
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <>
+      <Visione/>
+      <hr/>
+      <Stack/>
+      <hr/>
+      <Roadmap/>
+      <hr/>
+      <Ruoli/>
+      <hr/>
+      <Scope/>
+      <CTA/>
+      <footer>
+        <p>Clover · Costruito con ❤️ a Livigno, Italia · © 2026 · <a href="mailto:andrea@clover.example">andrea@clover.example</a></p>
+      </footer>
+      <TweaksPanel/>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('app-root')).render(<App/>);
+</script>
+</body>
+</html>
